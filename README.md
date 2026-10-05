@@ -1,7 +1,7 @@
 # DaVinci Resolve MCP Server 🎬🤖
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![DaVinci Resolve](https://img.shields.io/badge/DaVinci%20Resolve-18%20%7C%2019%20%7C%2020-orange.svg)](https://www.blackmagicdesign.com/products/davinciresolve)
+[![DaVinci Resolve](https://img.shields.io/badge/DaVinci%20Resolve-Free%20%26%20Studio-orange.svg)](https://www.blackmagicdesign.com/products/davinciresolve)
 [![MCP Protocol](https://img.shields.io/badge/MCP-stdio%20transport-green.svg)](https://modelcontextprotocol.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg)]()
@@ -25,13 +25,13 @@ flowchart LR
     end
 
     subgraph Local Engine
-        C["DaVinci Resolve (Studio/Native API)"]
+        C["DaVinci Resolve (Studio or Free via In-App Bridge)"]
     end
 
     A <-->|"JSON-RPC (stdio)"| B
     B --- D
     B --- E
-    B <-->|"Python Scripting Bridge"| C
+    B <-->|"Python API / Loopback Bridge"| C
 ```
 
 ---
@@ -40,7 +40,7 @@ flowchart LR
 
 - [🌟 Features](#-features)
 - [📋 Prerequisites](#-prerequisites)
-- [⚙️ DaVinci Resolve Configuration](#️-davinci-resolve-configuration)
+- [⚙️ DaVinci Resolve Configuration (Studio & Free)](#️-davinci-resolve-configuration-studio--free)
 - [🚀 Quickstart Installation](#-quickstart-installation)
 - [🔌 Client Configuration](#-client-configuration)
   - [Claude Desktop](#1-claude-desktop)
@@ -60,12 +60,15 @@ flowchart LR
 ## 🌟 Features
 
 - **🚀 100% Local & Fast (`stdio`)**: Communicates directly over standard I/O with zero open network ports, zero latency, and zero cloud lock-in.
+- **🆓 Supports BOTH Free & Studio Editions**: 
+  - **Studio**: Connects directly via native external Python scripting API.
+  - **Free**: Works seamlessly via our one-click In-App Loopback Bridge (`python install_bridge.py`), bypassing external scripting restrictions.
 - **🎬 49 Granular Tools**: Deep coverage across all DaVinci Resolve pages:
   - **Project & Database**: Create, open, save, query settings, and inspect projects.
   - **Media Pool**: Ingest assets, organize folders/bins, and construct timelines.
   - **Timeline & Inspector**: Crop, pan, tilt, zoom, composite modes, track inspection, and colored markers.
   - **Fusion & Titles**: Text+, lower thirds, generators, and Fusion composition node inspection.
-  - **Fairlight Audio**: AI Voice Isolation (0–100%), auto speech-to-text subtitles, and Fairlight track presets.
+  - **Fairlight Audio**: AI Voice Isolation (0–100%, Studio), auto subtitles (Studio), and Fairlight track presets.
   - **Color Grading**: CDL balance (Slope/Offset/Power/Saturation), 3D LUTs (.cube), `.drx` grades, and color versions.
   - **Deliver & Render**: Export presets (YouTube, ProRes, H.264), queue management, render monitoring, and controls.
 - **🧠 11 Embedded Knowledge Base Resources (`resolve-kb://`)**: Feeds the LLM comprehensive knowledge of Resolve API parameters, valid ranges, and safe workarounds.
@@ -79,8 +82,9 @@ flowchart LR
 Before installing the server, ensure you have:
 
 1. **DaVinci Resolve**:
-   - **DaVinci Resolve Studio** is recommended for external scripting via the Python API. *(Free version allows internal console scripts, but external automation requires Studio on most systems).*
-   - Compatible with **DaVinci Resolve 18, 19, and 20+**.
+   - **Both DaVinci Resolve Free and DaVinci Resolve Studio** are fully supported! (v18, v19, v20+).
+   - *Studio edition* connects natively via external scripting.
+   - *Free edition* connects seamlessly using our built-in In-App Bridge.
 2. **Python 3.10+**:
    - Python 3.10, 3.11, 3.12, or 3.13 installed on your system.
 3. **An MCP-Compatible Client**:
@@ -88,18 +92,31 @@ Before installing the server, ensure you have:
 
 ---
 
-## ⚙️ DaVinci Resolve Configuration
+## ⚙️ DaVinci Resolve Configuration (Studio & Free)
 
-You must enable external scripting in DaVinci Resolve:
+Follow the quick setup corresponding to your DaVinci Resolve edition:
 
-1. Launch **DaVinci Resolve**.
+### Option A: DaVinci Resolve Studio (Native API)
+Studio edition supports direct external scripting with zero ongoing steps:
+1. Open DaVinci Resolve Studio.
 2. Open **Preferences**:
    - **macOS**: `DaVinci Resolve` > `Preferences...` (or `Cmd + ,`)
    - **Windows / Linux**: `Edit` > `Preferences...` (or `Ctrl + ,`)
 3. Navigate to **System** > **General**.
-4. Find the **External scripting using** setting and change it to **Local** (or **Network**).
+4. Set **External scripting using** to **Local** (or **Network**).
 5. Click **Save**.
-6. Restart DaVinci Resolve if prompted.
+
+### Option B: DaVinci Resolve Free Edition (In-App Bridge)
+Blackmagic Design restricts external process scripting in the Free edition. To enable MCP automation on the Free edition:
+1. Run the one-line installer from your terminal:
+   ```bash
+   python install_bridge.py
+   ```
+2. Open DaVinci Resolve and load any project.
+3. In the top menu bar, click:
+   **Workspace > Scripts > Utility > davinci_resolve_mcp_bridge**
+4. A console banner will confirm: `Active & Listening on http://127.0.0.1:9099`.
+5. Keep DaVinci Resolve open. The MCP server will automatically detect and route all commands through this bridge!
 
 > [!TIP]
 > Keep DaVinci Resolve running with a project open whenever you interact with the MCP server through your AI assistant.
@@ -405,8 +422,12 @@ Connection Status: {
 
 ### 1. "Could not connect to DaVinci Resolve"
 - **Is DaVinci Resolve open?** Resolve must be running with a project loaded before running tools.
-- **Is External Scripting enabled?** Go to `Preferences > System > General` and make sure **External scripting using** is set to **Local** or **Network**.
-- **Studio vs Free**: External Python scripting is primarily supported in **DaVinci Resolve Studio**. The free version restricts external scripting processes on some operating systems.
+- **Using DaVinci Resolve Studio?** Make sure `Preferences > System > General > External scripting using` is set to **Local**.
+- **Using DaVinci Resolve Free Edition?** Blackmagic Design restricts external process scripting in the Free edition. Use the built-in In-App Bridge:
+  1. Run `python install_bridge.py` in your terminal.
+  2. In DaVinci Resolve, click: **Workspace > Scripts > Utility > davinci_resolve_mcp_bridge**.
+  3. You will see a banner confirming the bridge is listening on `http://127.0.0.1:9099`.
+  4. Now try again with your AI assistant!
 
 ### 2. "ModuleNotFoundError: No module named 'DaVinciResolveScript'"
 The bridge automatically searches default operating system directories:
