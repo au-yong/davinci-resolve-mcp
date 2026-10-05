@@ -1,0 +1,1 @@
+# DavinciResolveMCP resources package
