@@ -38,13 +38,14 @@ def get_resolve_script_dirs():
 
 def install_bridge():
     repo_root = Path(__file__).resolve().parent
-    bridge_src = repo_root / "davinci_resolve_mcp_bridge.py"
+    bridge_py = repo_root / "davinci_resolve_mcp_bridge.py"
+    bridge_lua = repo_root / "davinci_resolve_mcp_bridge.lua"
 
-    if not bridge_src.exists():
-        print(f"❌ Error: Could not find '{bridge_src}'. Make sure you run this script from the DavinciResolveMCP directory.")
+    if not bridge_py.exists() and not bridge_lua.exists():
+        print(f"❌ Error: Bridge scripts not found in '{repo_root}'.")
         sys.exit(1)
 
-    # 1. Record repo root so the bridge script can always find the tools package
+    # 1. Record repo root so the bridge scripts can always find the tools package
     cfg_file = Path.home() / ".davinci_resolve_mcp_root"
     try:
         with open(cfg_file, "w", encoding="utf-8") as f:
@@ -52,6 +53,13 @@ def install_bridge():
         print(f"📁 Registered repository root: {repo_root}")
     except Exception as e:
         print(f"⚠️ Could not write {cfg_file}: {e}")
+
+    # Also prepare IPC directory for Lua bridge
+    ipc_dir = Path.home() / ".davinci_resolve_mcp_ipc"
+    try:
+        ipc_dir.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
 
     # 2. Find or create target Scripts directory
     candidate_dirs = get_resolve_script_dirs()
@@ -69,31 +77,47 @@ def install_bridge():
         print(f"❌ Could not create directory '{target_dir}': {e}")
         sys.exit(1)
 
-    target_file = target_dir / "davinci_resolve_mcp_bridge.py"
+    installed_files = []
 
-    try:
-        shutil.copy2(bridge_src, target_file)
-        # Ensure executable permissions on Unix
-        if platform.system() != "Windows":
-            target_file.chmod(0o755)
-    except Exception as e:
-        print(f"❌ Failed to copy bridge to '{target_file}': {e}")
-        sys.exit(1)
+    # Copy Python bridge
+    if bridge_py.exists():
+        target_py = target_dir / "davinci_resolve_mcp_bridge.py"
+        try:
+            shutil.copy2(bridge_py, target_py)
+            if platform.system() != "Windows":
+                target_py.chmod(0o755)
+            installed_files.append(target_py.name)
+        except Exception as e:
+            print(f"⚠️ Failed to copy {bridge_py.name}: {e}")
+
+    # Copy Lua bridge
+    if bridge_lua.exists():
+        target_lua = target_dir / "davinci_resolve_mcp_bridge.lua"
+        try:
+            shutil.copy2(bridge_lua, target_lua)
+            if platform.system() != "Windows":
+                target_lua.chmod(0o755)
+            installed_files.append(target_lua.name)
+        except Exception as e:
+            print(f"⚠️ Failed to copy {bridge_lua.name}: {e}")
 
     print("\n" + "=" * 68)
-    print(" 🎉 DaVinci Resolve MCP In-App Bridge Installed Successfully!")
+    print(" 🎉 DaVinci Resolve MCP In-App Bridges Installed Successfully!")
     print("=" * 68)
-    print(f" Installed to: {target_file}\n")
+    print(f" Target Folder: {target_dir}")
+    print(f" Installed:     {', '.join(installed_files)}\n")
     print(" 🚀 HOW TO USE WITH DAVINCI RESOLVE (FREE & STUDIO EDITIONS):")
     print(" 1. Launch DaVinci Resolve and open any project.")
-    print(" 2. In the top menu bar, navigate to:")
-    print("      Workspace > Scripts > Utility > davinci_resolve_mcp_bridge")
-    print(" 3. A console message will confirm:")
-    print("      'Active & Listening on http://127.0.0.1:9099'")
-    print(" 4. Keep DaVinci Resolve open.")
+    print(" 2. In the top menu bar, click EITHER bridge script:")
+    print("      Workspace > Scripts > Utility > davinci_resolve_mcp_bridge.lua   (Native Lua)")
+    print("        -- OR --")
+    print("      Workspace > Scripts > Utility > davinci_resolve_mcp_bridge.py    (Python)")
     print(" ")
-    print(" 💬 Your AI assistants (Claude Desktop, Cursor, etc.) can now control")
-    print("    DaVinci Resolve seamlessly via standard MCP tools!")
+    print(" 💡 Pro-Tip: The .lua version is 100% native with ZERO Python required")
+    print("    inside DaVinci Resolve—ideal for the Free edition on any OS!")
+    print(" ")
+    print(" 3. Keep DaVinci Resolve open.")
+    print(" 4. Your AI assistant (Claude, Cursor, Windsurf, etc.) is now connected!")
     print("=" * 68 + "\n")
 
 if __name__ == "__main__":

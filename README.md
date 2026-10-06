@@ -106,17 +106,21 @@ Studio edition supports direct external scripting with zero ongoing steps:
 4. Set **External scripting using** to **Local** (or **Network**).
 5. Click **Save**.
 
-### Option B: DaVinci Resolve Free Edition (In-App Bridge)
+### Option B: DaVinci Resolve Free Edition (In-App Bridge: Lua or Python)
 Blackmagic Design restricts external process scripting in the Free edition. To enable MCP automation on the Free edition:
 1. Run the one-line installer from your terminal:
    ```bash
    python install_bridge.py
    ```
+   This installs **both** `davinci_resolve_mcp_bridge.lua` and `davinci_resolve_mcp_bridge.py` into your DaVinci Resolve Scripts folder.
 2. Open DaVinci Resolve and load any project.
-3. In the top menu bar, click:
-   **Workspace > Scripts > Utility > davinci_resolve_mcp_bridge**
-4. A console banner will confirm: `Active & Listening on http://127.0.0.1:9099`.
-5. Keep DaVinci Resolve open. The MCP server will automatically detect and route all commands through this bridge!
+3. In the top menu bar, click either script under **Workspace > Scripts > Utility**:
+   - **`davinci_resolve_mcp_bridge.lua` (Recommended)**:
+     Runs 100% natively using DaVinci Resolve's built-in Lua engine. **Zero Python configuration or environment setup required inside Resolve!**
+   - **`davinci_resolve_mcp_bridge.py`**:
+     Runs via Resolve's embedded Python interpreter over local loopback (`http://127.0.0.1:9099`).
+4. A console banner in DaVinci Resolve (`Workspace > Console`) will confirm the bridge is active and listening.
+5. Keep DaVinci Resolve open. The MCP server will automatically detect the active bridge!
 
 > [!TIP]
 > Keep DaVinci Resolve running with a project open whenever you interact with the MCP server through your AI assistant.
